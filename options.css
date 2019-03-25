@@ -1,0 +1,171 @@
+html, body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+#wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.gradient-text {
+    color: rgb(94, 4, 204);
+    
+    text-transform: uppercase;
+	background: linear-gradient(270deg, #9641ff, #2b9efe);
+    background-size: 400% 400%;
+
+    -webkit-animation: title-text-animation 30s ease infinite;
+    -moz-animation: title-text-animation 30s ease infinite;
+    animation: title-text-animation 30s ease infinite;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#header {
+    display: flex;
+    flex-flow: column wrap;
+    align-items: center;
+}
+
+#title {
+    font-size: 4rem;
+    font-weight: 800;
+    padding: 0pt 4pt;
+    text-align: center;
+}
+
+#sub-title {
+    font-size: 2rem;
+    font-weight: 800;
+    padding: 0pt 4pt;
+    text-align: center;
+    margin: 8pt 0pt;
+}
+
+@-webkit-keyframes title-text-animation {
+    0%{background-position:0% 5%}
+    50%{background-position:100% 96%}
+    100%{background-position:0% 5%}
+}
+@-moz-keyframes title-text-animation {
+    0%{background-position:0% 5%}
+    50%{background-position:100% 96%}
+    100%{background-position:0% 5%}
+}
+@keyframes title-text-animation { 
+    0%{background-position:0% 5%}
+    50%{background-position:100% 96%}
+    100%{background-position:0% 5%}
+}
+
+#content {
+    margin: 8pt 2%;
+    min-height: 50%;
+    box-shadow: 1pt 3pt 20pt rgba(0,0,0,0.1);
+    padding: 20pt;
+    border-radius: 20pt;
+    text-align: center;
+    flex: 1;
+}
+
+.subtitle-text {
+    font-size: 1.5em;
+    margin-bottom: 5pt;
+    font-weight: 600;
+}
+
+.detail-text {
+    font-size: 1.2em;
+    margin-bottom: 20pt;
+    font-weight: 500;
+}
+
+.fine-print {
+    font-size: 0.9em;
+    font-weight: 200;
+}
+
+#short-policy {
+    padding: 20pt 2%;
+    justify-content: flex-end;
+}
+
+.butt {
+    min-width: 40%;
+    padding: 0;
+    flex-grow: 1;
+}
+
+#auth {
+    padding: 20pt;
+    text-align: center;
+    border-radius: 20pt;
+
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: white;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    text-transform: uppercase;
+
+    box-shadow: 1pt 3pt 20pt rgba(0,0,0,0.3);
+}
+
+.bling {
+    background: linear-gradient(270deg, #9641ff, #2b9efe);
+    background-size: 400% 400%;
+
+    -webkit-animation: title-text-animation 10s ease infinite;
+    -moz-animation: title-text-animation 10s ease infinite;
+    animation: title-text-animation 10s ease infinite;
+}
+
+.plain {
+    color: white;
+    background-color: #455a64;
+}
+
+#clear {
+    flex-grow: 1;
+    min-width: 40%;
+    margin: auto;
+    padding: 20pt;
+    text-align: center;
+    border-radius: 20pt;
+
+    font-size: 1.6rem;
+    font-weight: 800;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    text-transform: uppercase;
+
+    box-shadow: 1pt 3pt 20pt rgba(0,0,0,0.3);
+}
+
+#history {
+    margin-top: 50pt;
+}
+
+#row-container {
+    display: flex;
+    flex-flow: row nowrap;
+}
+
+#row-container .fill {
+    flex-grow: 1;
+}

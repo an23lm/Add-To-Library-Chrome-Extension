@@ -1,0 +1,28 @@
+{
+    "name": "Add to Library",
+    "description" : "Add the music you are listening to on YouTube to your music Apple Music Library.",
+    "version": "0.1",
+    "manifest_version": 2,
+    "browser_action": {
+      "default_popup": "index.html",
+      "default_icon": "hello_extensions.png"
+    },
+    "options_ui": {
+      "page": "options.html",
+      "open_in_tab": true
+    },
+    "background": {
+        "scripts": [
+          "background.js"
+        ],
+        "persistent": true
+    },
+    "permissions": [
+        "tabs",
+        "storage",
+        "cookies",
+        "*://add-to-library.appspot.com/*",
+        "background"
+    ],
+    "content_security_policy": "script-src 'self' https://js-cdn.music.apple.com/musickit/v1/musickit.js; object-src 'self'"
+  }
