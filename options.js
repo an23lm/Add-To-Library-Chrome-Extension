@@ -1,7 +1,7 @@
-var musickitloaded = false;
-document.addEventListener('musickitloaded', function() {
-	musickitloaded = true;
-});
+// var musickitloaded = false;
+// document.addEventListener('musickitloaded', function() {
+// 	musickitloaded = true;
+// });
 
 window.onload = function() {
 	var userToken = null;
@@ -20,23 +20,10 @@ window.onload = function() {
 
 	getCookieDetails(developerTokenCookieDetails, (token) => {
 		developerToken = token;
-		if (developerToken == null) {
-			getCookieDetails(userTokenCookieDetails, (token) => {
-				userToken = token;
-				initalSetup();
-			});
-		} else {
-			var waitInterval = setInterval(() => {
-				if (musickitloaded) {
-					clearInterval(waitInterval);
-					setupMusicKit();
-					getCookieDetails(userTokenCookieDetails, (token) => {
-						userToken = token;
-						initalSetup();
-					});
-				}
-			}, 500)
-		}
+		getCookieDetails(userTokenCookieDetails, (token) => {
+			userToken = token;
+			initalSetup();
+		});
 	});
 
 	function getCookieDetails(details, callback) {
@@ -52,7 +39,7 @@ window.onload = function() {
 	function initalSetup() {
 		document.getElementById("auth-button").addEventListener("click", toggleAuth);
 		
-		if (userToken != null) {
+		if (developerToken != null && userToken != null) {
 			currentState = 'authed';
 			document.getElementById('auth').innerHTML = "unauthorize";
 			document.getElementById('auth').classList.remove("bling");
@@ -64,7 +51,7 @@ window.onload = function() {
 		if (userToken == null) {
 			openAuthWindow()
 		} else {
-			musicKitUnauth()
+			openUnauthWindow()
 		}
 	}
 
@@ -88,35 +75,71 @@ window.onload = function() {
 		}, 1000);
 	}
 
-	function setupMusicKit() {
-	    MusicKit.configure({
-	      developerToken: developerToken,
-	      app: {
-	        name: 'Add to Library',
-	        build: '0.1'
-	      }
-	    });
+	function encodeQueryData(data) {
+		const ret = [];
+		for (let d in data)
+			ret.push(encodeURIComponent(d) + '=' + encodeURIComponent(data[d]));
+		return ret.join('&');
 	}
 
-	function musicKitUnauth() {
-		music = MusicKit.getInstance()
-		music.unauthorize().then(function (userToken) {
-			chrome.cookies.getAll({domain: "https://add-to-library.appspot.com"}, function(cookies) {
-			    for(var i=0; i<cookies.length;i++) {
-			        chrome.cookies.remove({url: "https://add-to-library.appspot.com/", name: cookies[i].name});
-			    }
-			});
-			unauth();
-		}, function(result) {
-			console.log("Unauth fail: " + result);
-		});
+	function openUnauthWindow() {
+		var url = 'https://add-to-library.appspot.com/unauth';
+		
+		const data = {'developertoken': developerToken, 'applemusicusertoken': userToken};
+		const querystring = encodeQueryData(data);
+
+		url += "?" + querystring;
+
+		var win = window.open(url,'Unauthorize Apple Music','resizable,height=500,width=600'); 
+
+		var timer = setInterval(function() {
+    		if (win.closed) {
+        		clearInterval(timer);
+        		didAuth();
+    		}
+			else {
+				getCookieDetails(userTokenCookieDetails, (token) => {
+					if (token == null) {
+						userToken = token;
+						unauth();
+						clearInterval(timer);
+						win.close();
+					}
+				});
+			} 
+		}, 1000);
 	}
+
+	// function setupMusicKit() {
+	//     MusicKit.configure({
+	//       developerToken: developerToken,
+	//       app: {
+	//         name: 'Add to Library',
+	//         build: '0.1'
+	//       }
+	//     });
+	// }
+
+	// function musicKitUnauth() {
+	// 	music = MusicKit.getInstance()
+	// 	music.unauthorize().then(function (userToken) {
+	// 		chrome.cookies.getAll({domain: "https://add-to-library.appspot.com"}, function(cookies) {
+	// 		    for(var i=0; i<cookies.length;i++) {
+	// 		        chrome.cookies.remove({url: "https://add-to-library.appspot.com/", name: cookies[i].name});
+	// 		    }
+	// 		});
+	// 		unauth();
+	// 	}, function(result) {
+	// 		console.log("Unauth fail: " + result);
+	// 	});
+	// }
 
 	function unauth() {
 		currentState = 'unauthed';
 		document.getElementById('auth').innerHTML = "authorize";
 		document.getElementById('auth').classList.remove("plain");
 		document.getElementById('auth').classList.add("bling");
+		developerToken = null;
 	}
 
 	function auth() {
@@ -127,7 +150,7 @@ window.onload = function() {
 
 		getCookieDetails(developerTokenCookieDetails, (token) => {
 			developerToken = token;
-			setupMusicKit();
+			// setupMusicKit();
 		});
 	}
 
