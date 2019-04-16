@@ -200,6 +200,10 @@ body {
     height: 100%;
 }
 
+.art-img {
+    border-radius: 5pt;
+}
+
 .track-found > .track-details {
     color: rgb(202, 1, 102);
 }
@@ -256,6 +260,10 @@ body {
     -webkit-transform: translateY(-50%);
     -ms-transform: translateY(-50%);
     transform: translateY(-50%);
+}
+
+.add-button.highlight {
+    opacity: 0.6;
 }
 
 .search-button > img {

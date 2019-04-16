@@ -81,6 +81,12 @@ function createTracks() {
         if (tracks[trackKey] !== undefined) {
             trackInstances[videoIds[i]] = createTrack(videoIds[i], tracks[trackKey]);
             historyDom.insertAdjacentHTML('afterbegin', trackInstances[videoIds[i]].getHTML());
+            if (tracks[trackKey][YouTubeTrackKeys.searchList].length > 0) {
+                var url = tracks[trackKey][YouTubeTrackKeys.searchList][0][YouTubeTrackKeys.songArtwork][YouTubeTrackKeys.songArtworkUrl];
+                url = url.replace("{w}", "100");
+                url = url.replace("{h}", "100");
+                document.getElementById(videoIds[i]).getElementsByClassName('art-img')[0].setAttribute('src', url);
+            }
         } else {
             console.log('meta track ' + videoIds[i]);
             console.log(metadata)
@@ -130,6 +136,7 @@ function registerButtonsOnTracks() {
 function addSongButtonListener(event) {
     var key = this.getAttribute('data-key');
     var songid = this.getAttribute('data-song-id');
+    event.currentTarget.classList.add("highlight");
     addSong(key, songid);
     event.stopPropagation();
 }
@@ -153,6 +160,8 @@ function addSong(key, songid) {
             // handle add
         } else {
             console.log('failed to add');
+            var domEle = document.getElementById(key);
+            domEle.outerHTML = trackInstances[key].getHTML();
             // handle failed
         }
       }

@@ -13,9 +13,13 @@ export class Track {
 
 	createTrack() {
 		if (this.found && this.expandable) {
-			this.track = this.getFoundExpandTemplate(this.data[YouTubeTrackKeys.songName], this.data[YouTubeTrackKeys.artistName], this.data[YouTubeTrackKeys.songId], this.data[YouTubeTrackKeys.inLibrary], this.key);
+			this.track = this.getFoundExpandTemplate(this.data[YouTubeTrackKeys.songName],
+				this.data[YouTubeTrackKeys.artistName], this.data[YouTubeTrackKeys.songId],
+				this.data[YouTubeTrackKeys.inLibrary], this.key);
 		} else if (this.found && !this.expandable) {
-			this.track = this.getFoundTemplate(this.data[YouTubeTrackKeys.songName], this.data[YouTubeTrackKeys.artistName], this.data[YouTubeTrackKeys.songId], this.data[YouTubeTrackKeys.inLibrary], this.key);
+			this.track = this.getFoundTemplate(this.data[YouTubeTrackKeys.songName],
+				this.data[YouTubeTrackKeys.artistName], this.data[YouTubeTrackKeys.songId],
+				this.data[YouTubeTrackKeys.inLibrary], this.key);
 		} else {
 			this.track = this.getNotFoundTemplate(this.data, this.key);
 		}
@@ -36,7 +40,7 @@ export class Track {
 		<div id="${key}">
 			<div class="track track-found" data-key="${key}">
 	            <div class="track-art">
-	                <div class="art"></div>
+	                <div class="art" style="background: #${this.data[YouTubeTrackKeys.songArtwork][YouTubeTrackKeys.songArtworkBgColor]}"><img class="art-img" /></div>
 	            </div>
 	            <div class="track-details">
 	                <div class="track-title">${title}</div>
@@ -45,7 +49,7 @@ export class Track {
 	                <div class="expand-bar"></div>
 	            </div>
 	            <div class="track-add">
-	                <div class="add-button" data-key="${key}" data-song-id="${songid}">
+	                <div class="${ isadded ? 'added-button' : 'add-button' }" data-key="${key}" data-song-id="${songid}">
 	                    <img src="./resources/${ isadded ? 'success.svg' : 'plus.svg' }">
 	                </div>
 	            </div>
@@ -58,14 +62,14 @@ export class Track {
 		<div id="${key}">
 			<div class="track track-found" data-key="${key}">
 	            <div class="track-art">
-	                <div class="art"></div>
+	                <div class="art"  style="background: #${this.data[YouTubeTrackKeys.songArtwork][YouTubeTrackKeys.songArtworkBgColor]}"><img class="art-img" /></div>
 	            </div>
 	            <div class="track-details">
 	                <div class="track-title">${title}</div>
 	                <div class="track-artist">${artist}</div>
 	            </div>
 	            <div class="track-add">
-	                <div class="add-button" data-key="${key}" data-song-id="${songid}">
+	                <div class="${ isadded ? 'added-button' : 'add-button' }" data-key="${key}" data-song-id="${songid}">
 	                    <img src="./resources/${ isadded ? 'success.svg' : 'plus.svg' }">
 	                </div>
 	            </div>
@@ -79,7 +83,7 @@ export class Track {
 		    <div class="track track-not-found" data-key="${key}">
                 <div class="track-art">
                     <div class="art">
-                        <img src="./resources/youtube.svg" />
+                        <img class="art-img" src="./resources/youtube.svg" />
                     </div>
                 </div>
                 <div class="track-details">
