@@ -1,22 +1,39 @@
-class Track {
-	
+import { YouTubeTrackKeys } from './youtube_track.mjs';
+
+export class Track {
 	constructor(found=false, data, key, expandable=true) {
-		if (found && expandable) {
-			this.track = this.getFoundExpandTemplate(data['name'], data['artistName'], key);
-		} else if (found && !expandable) {
-			this.track = this.getFoundTemplate(data['name'], data['artistName'], key);
-		} else {
-			this.track = this.getNotFoundTemplate(data, key);
-		}
+		this.found = found;
+		this.data = data;
+		this.key = key;
+		this.expandable = expandable;
+
+		this.createTrack();
 		return this;
+	}
+
+	createTrack() {
+		if (this.found && this.expandable) {
+			this.track = this.getFoundExpandTemplate(this.data[YouTubeTrackKeys.songName], this.data[YouTubeTrackKeys.artistName], this.data[YouTubeTrackKeys.songId], this.data[YouTubeTrackKeys.inLibrary], this.key);
+		} else if (this.found && !this.expandable) {
+			this.track = this.getFoundTemplate(this.data[YouTubeTrackKeys.songName], this.data[YouTubeTrackKeys.artistName], this.data[YouTubeTrackKeys.songId], this.data[YouTubeTrackKeys.inLibrary], this.key);
+		} else {
+			this.track = this.getNotFoundTemplate(this.data, this.key);
+		}
 	}
 
 	getHTML() {
 		return this.track;
 	}
 
-	getFoundExpandTemplate(title, artist, key) {
+	reload(found, data) {
+		this.found = found;
+		this.data = data;
+		this.createTrack();
+	}
+
+	getFoundExpandTemplate(title, artist, songid, isadded, key) {
 		return `
+		<div id="${key}">
 			<div class="track track-found" data-key="${key}">
 	            <div class="track-art">
 	                <div class="art"></div>
@@ -28,15 +45,17 @@ class Track {
 	                <div class="expand-bar"></div>
 	            </div>
 	            <div class="track-add">
-	                <div class="add-button">
-	                    <img src="./resources/plus.svg">
+	                <div class="add-button" data-key="${key}" data-song-id="${songid}">
+	                    <img src="./resources/${ isadded ? 'success.svg' : 'plus.svg' }">
 	                </div>
 	            </div>
-	        </div>`;
+			</div>
+		</div>`;
 	}
 
-	getFoundTemplate(title, artist, key) {
+	getFoundTemplate(title, artist, songid, isadded, key) {
 		return `
+		<div id="${key}">
 			<div class="track track-found" data-key="${key}">
 	            <div class="track-art">
 	                <div class="art"></div>
@@ -46,15 +65,17 @@ class Track {
 	                <div class="track-artist">${artist}</div>
 	            </div>
 	            <div class="track-add">
-	                <div class="add-button">
-	                    <img src="./resources/plus.svg">
+	                <div class="add-button" data-key="${key}" data-song-id="${songid}">
+	                    <img src="./resources/${ isadded ? 'success.svg' : 'plus.svg' }">
 	                </div>
 	            </div>
-	        </div>`;
+			</div>
+		</div>`;
 	}
 
 	getNotFoundTemplate(track, key) {
 		return `
+		<div id="${key}">
 		    <div class="track track-not-found" data-key="${key}">
                 <div class="track-art">
                     <div class="art">
@@ -71,6 +92,7 @@ class Track {
                         <img src="./resources/search.svg">
                     </div>
                 </div>
-            </div>`;
+			</div>
+		</div>`;
 	}
 } 

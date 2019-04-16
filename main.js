@@ -4,10 +4,16 @@
  * Email: anselmjosephs@gmail.com
 */
 
+import { Track } from './track_template.mjs';
+import { YouTubeTrackKeys } from './youtube_track.mjs';
+
 /// Init on DOM load
-document.addEventListener("DOMContentLoaded", function(){ init(); }, false);
+var videoIds = [];
+var metadata = {};
 var tracks = {};
-var trackObjs = [];
+var trackInstances = {};
+
+document.addEventListener("DOMContentLoaded", function(){ init(); }, false);
 
 /**
  * Init the popup when clicked on the extension icon
@@ -15,6 +21,7 @@ var trackObjs = [];
 function init() {
 	/// Register Event Listeners
     document.getElementById("go-to-options").addEventListener("click", openOptions);
+    document.getElementById("options-button").addEventListener("click", openOptions);
     document.getElementById("selector-close").addEventListener("click", closeTrackSelector)
     document.getElementById("selector-search").addEventListener("click", searchTrackInSelector)
 
@@ -33,19 +40,54 @@ function init() {
     	document.getElementById('scroll-wrapper').classList.remove('blur');
     }
 
-    loadTracksFromStorage();
+    listenForRefresh();
+    getAllData();
 }
 
-/**
- * Load the tracks from local storage
- */
-function loadTracksFromStorage() {
-    retrieve('videoIds', function(_key, result) {
-        var i = result['ids'].length - 1;
-        while (i >= 0) {
-            retrieve(result['ids'][i--], createTrack);
+function getAllData() {
+    chrome.runtime.sendMessage({type: "get", key: "all"}, function(response) {
+        if (response.err === undefined) {
+            videoIds = response.ids;
+            metadata = response.metadata;
+            console.log(metadata);
+            tracks = response.tracks;
+            createTracks();
+        } else {
+            if (response.err === 1) {
+                document.getElementById('welcome-overlay').classList.remove('inactive');
+    	        document.getElementById('welcome-overlay').classList.add('active');
+            }
         }
-    })
+      }
+    );
+}
+
+function listenForRefresh() {
+    chrome.runtime.onMessage.addListener(
+        function(request, sender, sendResponse) {
+            if (sender.id === chrome.runtime.id && request.type === 'newmetadata') {
+                console.log('new meta data');
+            } else  if (sender.id === chrome.runtime.id && request.type === 'newtrack') {
+                console.log('new track')
+            }
+        }
+    );
+}
+
+function createTracks() {
+    var historyDom = document.getElementById('history');
+    for (var i in videoIds) {
+        var trackKey = `track-${videoIds[i]}`;
+        if (tracks[trackKey] !== undefined) {
+            trackInstances[videoIds[i]] = createTrack(videoIds[i], tracks[trackKey]);
+            historyDom.insertAdjacentHTML('afterbegin', trackInstances[videoIds[i]].getHTML());
+        } else {
+            console.log('meta track ' + videoIds[i]);
+            console.log(metadata)
+            // newTrackDOMElements.push(createMetaTrack(videoIds[i], metadata[videoIds[i]]))
+        }
+    }
+    registerButtonsOnTracks();
 }
 
 /**
@@ -54,28 +96,67 @@ function loadTracksFromStorage() {
  * @param {Object} trackObj 
  */
 function createTrack(key, trackObj) {
-    tracks[key] = trackObj;
-
-    if (trackObj['list'].length > 0) {
-        trackObjs.push(new Track(true, trackObj['list'][0], key));
+    var track = null;
+    if (trackObj[YouTubeTrackKeys.searchList].length > 0) {
+        track = new Track(true, trackObj[YouTubeTrackKeys.searchList][0], key);
     } else {
-        trackObjs.push(new Track(false, trackObj['title'], key));
+        track = new Track(false, trackObj[YouTubeTrackKeys.title], key);
     }
-    
-    loadTracks();
+    return track;
 }
 
-function loadTracks() {
-    var trackListHTML = '';
-    for (var i = 0; i < trackObjs.length; i++) {
-        trackListHTML += trackObjs[i].getHTML();
-    }
-    document.getElementById('history').innerHTML = trackListHTML;
+function createMetaTrack(key, trackObj) {
+    console.log(key)
+    // var track = null;
+    // if (trackObj[YouTubeTrackKeys.searchList].length > 0) {
+    //     track = new Track(true, trackObj[YouTubeTrackKeys.searchList][0], key);
+    // } else {
+    //     track = new Track(false, trackObj[YouTubeTrackKeys.title], key);
+    // }
+    // return track;
+}
 
+function registerButtonsOnTracks() {
     var tracksEles = document.getElementsByClassName('track');
-    var i = tracksEles.length;
-    while (i--) 
+    for (var i = 0; i < tracksEles.length; i++) {
         tracksEles[i].addEventListener('click', openTrackSelector);
+        var addButton = tracksEles[i].getElementsByClassName('add-button');
+        if (addButton.length > 0) { 
+            addButton[0].addEventListener('click', addSongButtonListener);
+        }
+    }
+}
+
+function addSongButtonListener(event) {
+    var key = this.getAttribute('data-key');
+    var songid = this.getAttribute('data-song-id');
+    addSong(key, songid);
+    event.stopPropagation();
+}
+
+function addSong(key, songid) {
+    chrome.runtime.sendMessage({type: "add", key: "song", value: songid, videoId: key}, function(response) {
+        if (response === true) {
+            console.log('added song');
+            var trackdata = tracks[`track-${key}`];
+            if (trackdata[YouTubeTrackKeys.searchList].length > 0) {
+                for (var i = 0; i < trackdata[YouTubeTrackKeys.searchList].length; i++) {
+                    if (trackdata[YouTubeTrackKeys.searchList][i][YouTubeTrackKeys.songId] == songid) {
+                        trackdata[YouTubeTrackKeys.searchList][i][YouTubeTrackKeys.inLibrary] = true;
+                        trackInstances[key].reload(true, trackdata[YouTubeTrackKeys.searchList][i]);
+                        break;
+                    }
+                }
+            }
+            var domEle = document.getElementById(key);
+            domEle.outerHTML = trackInstances[key].getHTML();
+            // handle add
+        } else {
+            console.log('failed to add');
+            // handle failed
+        }
+      }
+    );
 }
 
 /**
@@ -84,13 +165,13 @@ function loadTracks() {
  */
 function openTrackSelector() {
     var key = this.getAttribute('data-key');
-    var thisTrackObj = tracks[key];
+    var thisTrackObj = tracks[`track-${key}`];
     
     var thisTracksHtml = getTracksHTML(thisTrackObj, key);
 
     document.getElementById('selector-overlay').setAttribute("data-key", key);
-    document.querySelector('#selector-youtube-title').innerHTML = thisTrackObj['youtubeTitle'];
-    document.querySelector('#selector-track-title input').value = thisTrackObj['title'];
+    document.querySelector('#selector-youtube-title').innerHTML = thisTrackObj[YouTubeTrackKeys.originalTitle];
+    document.querySelector('#selector-track-title input').value = thisTrackObj[YouTubeTrackKeys.title];
     document.getElementById('selector-result-list').innerHTML = thisTracksHtml;
 
     /* Animate in the selector overlay */
@@ -106,7 +187,7 @@ function openTrackSelector() {
 function searchTrackInSelector() {
     var searchTerm = document.querySelector('#selector-track-title input').value;
     var key = document.getElementById('selector-overlay').getAttribute('data-key');
-    var youtubeTitle = tracks[key]['youtubeTitle'];
+    var youtubeTitle = tracks[`track-${key}`][YouTubeTrackKeys.originalTitle];
     
     chrome.extension.getBackgroundPage().searchAPIs(searchTerm, youtubeTitle, key, (videoId, object, err) => {
         if (err != null) {
@@ -127,36 +208,9 @@ function searchTrackInSelector() {
 function getTracksHTML(list, key) {
     var thisTracksHtml = "";
 
-    for(var i = 0; i < list['list'].length; i++) {
-        var newT = new Track(true, list['list'][i], key, false)
+    for(var i = 0; i < list[YouTubeTrackKeys.searchList].length; i++) {
+        var newT = new Track(true, list[YouTubeTrackKeys.searchList][i], key, false)
         thisTracksHtml += newT.getHTML();
     }
     return thisTracksHtml;
-}
-
-/**
- * Store the key/value pair into local storage and callback when completed
- * @param {string} key 
- * @param {*} value 
- * @param {function} callback 
- */
-function store(key, value, callback=function(){}) {
-    chrome.storage.local.set({[key]: value}, function() {
-        console.log("Stored key: " + key + " with value: ");
-        console.log(value);
-        callback();
-    });
-}
-
-/**
- * Retrieve key from local storage and callback when completed
- * @param {string} key 
- * @param {function} callback 
- */
-function retrieve(key, callback) {
-    chrome.storage.local.get([key], function(result) {
-        console.log('retreve value: ');
-        console.log(result);
-        callback(key, result[key]);
-    })
 }

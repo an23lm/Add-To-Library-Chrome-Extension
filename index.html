@@ -2,7 +2,6 @@
 <html>
     <head>
         <link rel="stylesheet" type="text/css" href="main.css">
-        <script type="text/javascript" src="./track_template.mjs"></script>
     </head>
 <body>
 <div id="wrapper">
@@ -55,7 +54,25 @@
 
         </div>
     </div>
+    <div id="welcome-overlay" class="inactive">
+        <div id="welcome-card">
+            <div id="welcome-title">
+                Add to Library
+            </div>
+            <div id="welcome-subtitle">
+                Link your Apple ID to proceed
+            </div>
+            <div id="login-help">
+                <div id="options-button"><img src="./resources/settings.svg" /></div>
+                <div id="login-inst">
+                    Open <span class="highlight-action-text">Options</span> and select <span class="highlight-action-text">Authorize</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-<script src="./main.js"></script>
+<script type="module" src="./youtube_track.mjs"></script>
+<script type="module" src="./track_template.mjs"></script>
+<script type="module" src="./main.js"></script>
 </body>
 </html>

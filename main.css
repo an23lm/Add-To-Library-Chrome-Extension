@@ -15,7 +15,6 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
     display: flex;
     flex-flow: column nowrap;
-    overflow-y: hidden;
 }
 
 #main-title-wrapper {
@@ -83,11 +82,13 @@ body {
 }
 
 #scroll-wrapper {
-    overflow-y: scroll;
+    overflow: auto;
     padding: 8pt 4pt;
     padding-top: 40pt;
     transition: all 0.5s;
 }
+
+#scroll-wrapper::-webkit-scrollbar { width: 0 !important }
 
 #scroll-wrapper.blur {
     filter: blur(5px);
@@ -146,7 +147,7 @@ body {
     max-width: 100%;
     min-height: 20pt;
     margin: 0pt 8pt;
-    line-height: 20pt;
+    line-height: auto;
     font-size: 1.4rem;
     font-weight: 600;
     color: rgb(93, 0, 206);
@@ -157,7 +158,6 @@ body {
 
 #history {
     z-index: 750;
-    overflow-y: scroll;
     background-color: rgba(43, 158, 254, 0.1);
     padding: 4pt 4pt;
     border-radius: 5pt;
@@ -288,7 +288,7 @@ body {
 .track-not-found > .track-details > .track-name {
     white-space: pre-wrap;
     overflow: hidden;
-    line-height: 1rem;
+    line-height: auto;
     font-weight: 500;
     height: 32pt;
 }
@@ -485,7 +485,7 @@ body {
 }
 
 #selector-result-list {
-    overflow: scroll;
+    overflow: auto;
     padding: 8pt 4pt;
     padding-top: 90pt;
     position: relative;
@@ -493,6 +493,119 @@ body {
     z-index: 995;
 }
 
+#selector-result-list::-webkit-scrollbar { width: 0 !important }
+
 #selector-result-list > .track {
     box-shadow: none;
+}
+
+#welcome-overlay {
+    position: absolute;
+    width: var(--view-width);
+    height: var(--view-height);
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    background: white;
+}
+
+#welcome-overlay.inactive {
+    display: none;
+}
+
+#welcome-overlay.active {
+    display: flex;
+}
+
+#welcome-card {
+    display: flex;
+    flex-flow: column nowrap;
+    flex: 1;
+
+    margin: 8pt;
+    border-radius: 20pt;
+    box-shadow: 5px 3px 10px #00000050;
+
+    background-color: black;
+    background: linear-gradient(270deg, #9641ff, #2b9efe);
+    background-size: 400% 400%;
+    -webkit-animation: welcome-animation 6s ease infinite;
+    -moz-animation: welcome-animation 6s ease infinite;
+    animation: welcome-animation 6s ease infinite;
+}
+
+@-webkit-keyframes welcome-animation {
+    0%{background-position:0% 5%}
+    50%{background-position:100% 96%}
+    100%{background-position:0% 5%}
+}
+@-moz-keyframes welcome-animation {
+    0%{background-position:0% 5%}
+    50%{background-position:100% 96%}
+    100%{background-position:0% 5%}
+}
+@keyframes welcome-animation { 
+    0%{background-position:0% 5%}
+    50%{background-position:100% 96%}
+    100%{background-position:0% 5%}
+}
+
+#welcome-title {
+    font-size: 35pt;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    margin-top: 20pt;
+    text-transform: uppercase;
+}
+
+#welcome-subtitle {
+    margin-top: 20pt;
+    font-size: 12pt;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+}
+
+#login-help {
+    display: flex;
+    flex-grow: 1;
+    flex-flow: column nowrap;
+    justify-content: center;
+    align-items: center;
+    padding: 8pt;
+    margin: 20pt;
+    background: #fffffff0;
+    border-radius: 10pt;
+    box-shadow: 5px 3px 10px #00000015;
+}
+
+#options-button {
+    cursor: pointer;
+    margin-bottom: 10pt;
+    padding: 4pt;
+    border: 1px solid #00000030;
+    background: white;
+    border-radius: 5pt;
+    box-shadow: 5px 3px 10px #00000010;
+}
+
+#options-button > img {
+    height: 30pt;
+    width: 30pt;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#login-inst {
+    font-size: 13pt;
+    font-weight: 400;
+    color: #434343;
+    text-align: center;
+}
+
+.highlight-action-text {
+    font-weight: 600;
+    color: #333333;
 }

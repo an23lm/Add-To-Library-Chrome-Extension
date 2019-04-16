@@ -100,9 +100,8 @@ a {
 }
 
 .butt {
-    min-width: 40%;
     padding: 0;
-    flex-grow: 1;
+    flex: 1;
 }
 
 #auth {
@@ -122,6 +121,7 @@ a {
 
     box-shadow: 1pt 3pt 20pt rgba(0,0,0,0.3);
 }
+    
 
 .bling {
     background: linear-gradient(270deg, #9641ff, #2b9efe);
@@ -138,12 +138,10 @@ a {
 }
 
 #clear {
-    flex-grow: 1;
-    min-width: 40%;
-    margin: auto;
-    padding: 20pt;
-    text-align: center;
+    flex: 1;
+    padding: 20pt 0pt;
     border-radius: 20pt;
+    cursor: pointer;
 
     font-size: 1.6rem;
     font-weight: 800;
@@ -167,5 +165,5 @@ a {
 }
 
 #row-container .fill {
-    flex-grow: 1;
+    flex: 1;
 }

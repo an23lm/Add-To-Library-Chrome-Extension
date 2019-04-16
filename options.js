@@ -38,6 +38,7 @@ window.onload = function() {
 
 	function initalSetup() {
 		document.getElementById("auth-button").addEventListener("click", toggleAuth);
+		document.getElementById("clear").addEventListener("click", clearLocalStorage);
 		
 		if (developerToken != null && userToken != null) {
 			currentState = 'authed';
@@ -45,6 +46,17 @@ window.onload = function() {
 			document.getElementById('auth').classList.remove("bling");
 			document.getElementById('auth').classList.add("plain");
 		}
+	}
+
+	function clearLocalStorage() {
+		chrome.storage.local.clear(() => {
+			var error = chrome.runtime.lastError;
+			if (error) {
+				console.error(error);
+			} else {
+				console.log('Cleared storage');
+			}
+		});
 	}
 
 	function toggleAuth() {
@@ -110,36 +122,14 @@ window.onload = function() {
 		}, 1000);
 	}
 
-	// function setupMusicKit() {
-	//     MusicKit.configure({
-	//       developerToken: developerToken,
-	//       app: {
-	//         name: 'Add to Library',
-	//         build: '0.1'
-	//       }
-	//     });
-	// }
-
-	// function musicKitUnauth() {
-	// 	music = MusicKit.getInstance()
-	// 	music.unauthorize().then(function (userToken) {
-	// 		chrome.cookies.getAll({domain: "https://add-to-library.appspot.com"}, function(cookies) {
-	// 		    for(var i=0; i<cookies.length;i++) {
-	// 		        chrome.cookies.remove({url: "https://add-to-library.appspot.com/", name: cookies[i].name});
-	// 		    }
-	// 		});
-	// 		unauth();
-	// 	}, function(result) {
-	// 		console.log("Unauth fail: " + result);
-	// 	});
-	// }
-
 	function unauth() {
 		currentState = 'unauthed';
 		document.getElementById('auth').innerHTML = "authorize";
 		document.getElementById('auth').classList.remove("plain");
 		document.getElementById('auth').classList.add("bling");
 		developerToken = null;
+
+		sendMessageToBackground('authchange');
 	}
 
 	function auth() {
@@ -150,8 +140,9 @@ window.onload = function() {
 
 		getCookieDetails(developerTokenCookieDetails, (token) => {
 			developerToken = token;
-			// setupMusicKit();
 		});
+
+		sendMessageToBackground('authchange');
 	}
 
 	function didAuth() {
@@ -162,6 +153,13 @@ window.onload = function() {
 			} else if (token == null && currentState == 'authed') {
 				unauth();
 			}
+		});
+	}
+
+	function sendMessageToBackground(type) {
+		chrome.runtime.sendMessage({type: type}, function(response) {
+			// handle failed cookie save state	
+			console.log(response);
 		});
 	}
 };

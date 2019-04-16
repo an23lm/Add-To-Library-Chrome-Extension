@@ -1,108 +1,144 @@
-var videoIds = {'ids': []};
-store('videoIds', videoIds, function() {console.log('set')});
+/**
+ * Author: Anselm Joseph
+ * GitHub: github.com/an23lm
+ * Email: anselmjosephs@gmail.com
+*/
 
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-    if (changeInfo.title != undefined) {
-        if (tab.url.startsWith("https://www.youtube.com/watch") && tab.title.endsWith(" - YouTube")) {
-            var title = tab.title.split(" - YouTube")[0];
-            var videoId = tab.url.split('v=')[1];
-			var ampersandPosition = videoId.indexOf('&');
-			if(ampersandPosition != -1) {
-			  videoId = videoId.substring(0, ampersandPosition);
-			}
-			retrieve('videoIds', function(result) {
-				if (Object.keys(result).length == 0) {
-					result = videoIds;
-				}
-				if (result['ids'].indexOf(videoId) > -1) {
-					result['ids'].splice(result['ids'].indexOf(videoId), 1);
-				}
-				result['ids'].push(videoId);
-				store('videoIds', result);
-			});
-            searchAPIs(title, title, videoId);
-        }
-    }
-});
+import { Storage } from "./local_storage.mjs";
+import { AppleAPI } from "./apple_api.mjs"
+import { YouTubeTrack, YouTubeTrackKeys } from "./youtube_track.mjs"
 
+const devTokenDeets = {
+	'url': 'https://add-to-library.appspot.com/',
+	'name': 'developertoken'
+};
 const musicTokenDeets = {
 	'url': 'https://add-to-library.appspot.com/',
 	'name': 'applemusicuser'
 };
-
 const storefrontDeets = {
 	'url': 'https://add-to-library.appspot.com/',
 	'name': 'applestorefront'
 };
 
-async function searchAPIs(term, youtubeTitle, videoId, callback=()=>{}) {
-	const url = 'https://add-to-library.appspot.com/search';
-	let formData = new FormData();
-	formData.append('term', term);
-	formData.append('videoId', videoId);
+var DEV_TOKEN = null;
+var USER_TOKEN = null;
+var STOREFRONT = null;
+var api = null;
+var auth = false;
 
-	try {
-		const musicToken = await getCookieToken(musicTokenDeets);
-		const storefront = await getCookieToken(storefrontDeets);
+Storage.sync()
 
-		const oParam = {
-			headers: {
-				"Music-User-Token": musicToken,
-				"Apple-Storefront": storefront,
-			},
-			body: formData,
-			method: "POST"
-		};
+loadAllTokens()
 
-		fetch(url, oParam).then(response => {
-			return response.json();
-		}).then(data => {
-			if (data['SUCCESS'] == "true") {
-				var results = data['response']['results'];
-				if (Object.keys(results).length === 0) {
-					console.log("No items found");
-					var obj = {'title': term, 'youtubeTitle': youtubeTitle, 'list': []}
-					store(videoId, obj);
-					callback(videoId, obj, null);
-				} else {
-					var songs = results['songs']['data'];
-					var songList = [];
-					for (var i = 0; i < songs.length; i++) {
-						var song = songs[i];
+function loadAllTokens() {
+	var devTokenPromise = getCookieValue(devTokenDeets)
+	var musicTokenPromise = getCookieValue(musicTokenDeets)
+	var storefrontPromise = getCookieValue(storefrontDeets)
 
-						var newSong = {};
-						newSong['albumName'] = song['attributes']['albumName'];
-						newSong['artistName'] = song['attributes']['artistName'];
-						newSong['name'] = song['attributes']['name'];
-						newSong['artwork'] = {'bgColor': song['attributes']['artwork']['bgColor'], 'url': song['attributes']['artwork']['url']};
-						newSong['url'] = song['attributes']['url'];
-						newSong['href'] = song['href'];
-						newSong['id'] = song['id'];
-						newSong['type'] = song['type'];
-
-						songList.push(newSong);
-					}
-					var songObj = {'title': term, 'youtubeTitle': youtubeTitle, 'list': songList}
-					store(videoId, songObj);
-					callback(videoId, songObj, null);
-				}
-			} else {
-				console.log("Search Failed");
-				callback(null, null, "Search Failed");
-			}
-		}).then(err => {
-			if (err != undefined) {
-				console.log(err);
-				callback(null, null, "Search Failed");
-			}
+	Promise.all([devTokenPromise, musicTokenPromise, storefrontPromise])
+		.then(values => {
+			DEV_TOKEN = values[0]
+			USER_TOKEN = values[1]
+			STOREFRONT = values[2]
+			tokensLoaded(true)
 		})
-	} catch(error) {
-		console.log(error);
-		callback(undefined, undefined, "Search Failed");
+		.catch(err => {
+			console.log(err);
+			console.log('Tokens not found')
+			tokensLoaded(false)
+		});
+}
+
+function tokensLoaded(flag) {
+	if (flag) {
+		auth = true;
+		api = new AppleAPI(DEV_TOKEN, USER_TOKEN, STOREFRONT);
+		initTabListener();
+	} else {
+		// ask user to reauth
+		auth = false;
+		removeCookie(musicTokenDeets);
+		removeCookie(storefrontDeets);
+		removeCookie(devTokenDeets);
 	}
 }
 
-async function getCookieToken(details) {
+chrome.runtime.onMessage.addListener(
+	function(request, sender, sendResponse) {
+		if (sender.id === chrome.runtime.id && request.type === 'authchange') {
+			console.log('loading tokens');
+			loadAllTokens();
+			sendResponse('ACK');
+		} else if (sender.id === chrome.runtime.id && auth == true) {
+			if (request.type === 'get') {
+				if (request.key === 'ids') {
+					sendResponse({ids: Storage.videoIds});
+				} else if (request.key === 'track') {
+					sendResponse({tracks: Storage.tracks[request.value]});
+				} else if (request.key === 'all') {
+					sendResponse({ids: Storage.videoIds, metadata: Storage.metadata, tracks: Storage.tracks});
+				}
+			} else if (request.type === 'set') {
+				if (request.key == 'track') {
+					Storage.storeTrack(request.trackKey, request.trackValue);
+				}
+			} else if (request.type === 'add') {
+				if (request.key == 'song') {
+					var id = request.value;
+					var key = request.videoId;
+
+					api.addSongToLibrary(id)
+						.then( res => {
+							Storage.updateTrackInLibrary(key, id, true);
+							sendResponse(res);
+						 } )
+						.catch( err => sendResponse(false, err) );
+					
+					return true;
+				}
+			}
+		} else if (sender.id === chrome.runtime.id && auth == false) {
+			sendResponse({err: 1});
+		}
+	}
+);
+
+function sendMessageToPopup(type, key, value) {
+	chrome.runtime.sendMessage({type: type, key: key, value: value});
+}
+
+function initTabListener() {
+	chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+		if (changeInfo.title != undefined) {
+			if (tab.url.startsWith("https://www.youtube.com/watch") && tab.title.endsWith(" - YouTube")) {
+				var title = tab.title.split(" - YouTube")[0];
+				var videoId = tab.url.split('v=')[1];
+				var ampersandPosition = videoId.indexOf('&');
+				if(ampersandPosition != -1) {
+				  videoId = videoId.substring(0, ampersandPosition);
+				}
+
+				Storage.appendVideoID(videoId);
+				Storage.storeMetaData(videoId, title);
+				sendMessageToPopup('newmetadata', videoId, title);
+
+				api.search(title)
+					.then((response) => {
+						var obj = YouTubeTrack.createTrackFromResponse(videoId, title, title, response);
+						Storage.storeTrack(videoId, obj);
+						sendMessageToPopup('newtrack', videoId, obj);
+					}).catch(err => {
+						// handle error
+						console.log('Search on Apple Music API failed')
+						console.log(err);
+					});				
+			}
+		}
+	});
+}
+
+async function getCookieValue(details) {
 	return new Promise(function(resolve, reject) {
 		chrome.cookies.get(details, function(cookie) {
 			var token = null;
@@ -110,7 +146,7 @@ async function getCookieToken(details) {
 				token = cookie.value.trim() != "" ? cookie.value : null;
 			}
 			if (token == null) {
-				reject("Token is null");
+				reject(token);
 			} else {
 				resolve(token);
 			}
@@ -118,18 +154,14 @@ async function getCookieToken(details) {
 	});
 }
 
-function store(key, value, callback=function(){}) {
-	chrome.storage.local.set({[key]: value}, function() {
-		console.log("Stored key: " + key + " with value: ");
-		console.log(value);
-		callback();
+async function removeCookie(details) {
+	return new Promise(function(resolve, reject) {
+		chrome.cookies.remove(details, (details) => {
+			if (details == null) {
+				reject(chrome.runtime.lastError);
+			} else {
+				resolve();
+			}
+		});
 	});
-}
-
-function retrieve(key, callback) {
-	chrome.storage.local.get([key], function(result) {
-		console.log('retreve value: ');
-		console.log(result);
-		callback(result[key]);
-	})
 }
