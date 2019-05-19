@@ -97,6 +97,23 @@ chrome.runtime.onMessage.addListener(
 					
 					return true;
 				}
+			} else if (request.type === 'search') {
+				var videoId = request.videoId;
+				var title = request.title;
+				var originalTitle = request.originalTitle;
+
+				api.search(title)
+					.then((response) => {
+						var obj = YouTubeTrack.createTrackFromResponse(videoId, title, originalTitle, response);
+						Storage.storeTrack(videoId, obj);
+						sendResponse({track: obj, err: null});
+					}).catch(err => {
+						// handle error
+						console.log('Search on Apple Music API failed')
+						console.log(err);
+						sendResponse({track: null, err: err});
+					});
+				return true;
 			}
 		} else if (sender.id === chrome.runtime.id && auth == false) {
 			sendResponse({err: 1});
@@ -119,20 +136,26 @@ function initTabListener() {
 				  videoId = videoId.substring(0, ampersandPosition);
 				}
 
-				Storage.appendVideoID(videoId);
-				Storage.storeMetaData(videoId, title);
-				sendMessageToPopup('newmetadata', videoId, title);
+				isVideoCategoryMusic(videoId).then(res => {
+					if (!res) {
+						return;
+					}
 
-				api.search(title)
-					.then((response) => {
-						var obj = YouTubeTrack.createTrackFromResponse(videoId, title, title, response);
-						Storage.storeTrack(videoId, obj);
-						sendMessageToPopup('newtrack', videoId, obj);
-					}).catch(err => {
-						// handle error
-						console.log('Search on Apple Music API failed')
-						console.log(err);
-					});				
+					Storage.appendVideoID(videoId);
+					Storage.storeMetaData(videoId, title);
+					sendMessageToPopup('newmetadata', videoId, title);
+
+					api.search(title)
+						.then((response) => {
+							var obj = YouTubeTrack.createTrackFromResponse(videoId, title, title, response);
+							Storage.storeTrack(videoId, obj);
+							sendMessageToPopup('newtrack', videoId, obj);
+						}).catch(err => {
+							// handle error
+							console.log('Search on Apple Music API failed')
+							console.log(err);
+						});
+				})		
 			}
 		}
 	});
@@ -164,4 +187,32 @@ async function removeCookie(details) {
 			}
 		});
 	});
+}
+
+async function isVideoCategoryMusic(videoId) {
+	const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=AIzaSyCSTtkjb3rwQ_WdeLgG3XZe0h-bhO3CkaI`;
+	const params = {
+		method: "GET",
+		mode: "cors"
+	};
+	return new Promise((resolve, reject) => {
+		fetch(url, params).then(response => {
+			if (!response.ok) {
+				console.log(response);
+				reject(response);
+				return
+			}
+			return response.json();
+		}).then(data => {
+			console.log(data);
+			if (data["items"][0]["snippet"]["categoryId"] == 10) {
+				resolve(true);
+			} else {
+				resolve(false);
+			}
+		}).catch(error => {
+			console.log(error);
+			reject(error);
+		})
+	})
 }

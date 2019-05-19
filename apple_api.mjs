@@ -25,7 +25,8 @@ export class AppleAPI {
 			headers: {
 				"Authorization": `Bearer ${this.devToken}`,
 				"Music-User-Token": this.userToken,
-			},
+            },
+            mode: "cors",
 			method: "GET"
         };
         
@@ -51,6 +52,7 @@ export class AppleAPI {
                 "Authorization": `Bearer ${this.devToken}`,
                 "Music-User-Token": this.userToken
             },
+            mode: "cors",
             method: "GET"
         };
 
@@ -87,6 +89,7 @@ export class AppleAPI {
 				"Music-User-Token": this.userToken,
             },
             body: body,
+            mode: "cors",
 			method: "POST"
         };
 

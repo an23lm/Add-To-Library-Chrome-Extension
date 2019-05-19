@@ -1,11 +1,11 @@
 {
     "name": "Add to Library",
     "description" : "Add the music you are listening to on YouTube to your music Apple Music Library.",
-    "version": "0.1",
+    "version": "1.0",
     "manifest_version": 2,
     "browser_action": {
       "default_popup": "index.html",
-      "default_icon": "hello_extensions.png"
+      "default_icon": "atl.png"
     },
     "options_ui": {
       "page": "options.html",

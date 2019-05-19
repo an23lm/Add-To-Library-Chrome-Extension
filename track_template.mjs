@@ -59,7 +59,7 @@ export class Track {
 
 	getFoundTemplate(title, artist, songid, isadded, key) {
 		return `
-		<div id="${key}">
+		<div id="s-${songid}">
 			<div class="track track-found" data-key="${key}">
 	            <div class="track-art">
 	                <div class="art"  style="background: #${this.data[YouTubeTrackKeys.songArtwork][YouTubeTrackKeys.songArtworkBgColor]}"><img class="art-img" /></div>
