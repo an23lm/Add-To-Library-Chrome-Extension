@@ -190,7 +190,7 @@ async function removeCookie(details) {
 }
 
 async function isVideoCategoryMusic(videoId) {
-	const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=AIzaSyCSTtkjb3rwQ_WdeLgG3XZe0h-bhO3CkaI`;
+	const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=<api key>`;
 	const params = {
 		method: "GET",
 		mode: "cors"
